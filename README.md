@@ -1,0 +1,59 @@
+# Cura · Agenda sanitaria
+
+Step 01: prototipo interattivo responsive in italiano, costruito con Next.js, React e TypeScript e predisposto per Vercel. La precedente applicazione `../WebAppSanitaria` non viene modificata.
+
+## Stato della verifica
+
+Dipendenze installate con pnpm; controllo TypeScript e build di produzione completati con esito positivo. Demo avviata su http://localhost:3000 e verificata nel browser. Controllati dashboard, navigazione delle sei sezioni, creazione e modifica di una visita dimostrativa, persistenza dopo ricaricamento, ricerca, cambio mese e validazione dell'orario del promemoria.
+
+Verificati anche dashboard, menu, calendario e modulo appuntamenti a una larghezza di 390 px. Si tratta di una verifica responsive in Chromium: la prova su Safari di un iPhone reale resta da fare insieme. Screenshot nella cartella `verifiche`. Nel browser di prova rimane l'appuntamento inventato “Prova step 1” del 2 dicembre 2026.
+
+La verifica di questo step non copre ancora caricamento/anteprima dei file, download CSV/ICS e notifiche. Account, dati remoti e invii automatici appartengono ai prossimi step.
+
+## Avvio
+
+Su questo PC puoi fare doppio clic su **Avvia Cura.cmd**: trova anche il runtime Node incluso in Codex. Il server già aperto su porta 3000 deve essere fermato prima di avviarne un altro. Il file mantiene aperta la console durante l'uso.
+
+Per un'installazione su un altro PC: Node.js 22 LTS o successivo e pnpm. Il lockfile `pnpm-lock.yaml` registra le versioni installate.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Aprire http://localhost:3000. Per un iPhone sulla stessa rete Wi-Fi: aprire `http://IP-DEL-PC:3000` e consentire l'accesso nella rete privata se Windows Firewall lo richiede. Il server deve restare acceso. La versione pubblicata userà un indirizzo HTTPS accessibile anche fuori casa.
+
+```sh
+pnpm typecheck
+pnpm build
+pnpm start
+```
+
+## Verifica insieme: step 01
+
+- Dashboard con riepilogo e prossime visite.
+- Creazione, modifica, eliminazione e completamento di appuntamenti.
+- Calendario mensile navigabile e selezione del giorno; su telefono i punti indicano gli eventi, i dettagli appaiono sotto il calendario.
+- Ricerca per visita, struttura e medico, filtri per stato.
+- Scelta del giorno e dell'ora del promemoria (precedente alla visita).
+- Esportazione ICS dell'evento con avviso, da importare in Calendario: controllare l'avviso dopo l'importazione.
+- Selezione di file PDF/JPG fino a 10 MB, anteprima e rimozione durante la sessione.
+- Report riepilogativo ed esportazione CSV compatibile con Excel.
+
+Gli appuntamenti dimostrativi si conservano nel localStorage del singolo browser. Gli allegati sono oggetti File in memoria e scompaiono al refresh: non vengono caricati su un server. Il profilo Andrea è una dimostrazione, senza autenticazione. Non c'è sincronizzazione fra dispositivi, né invio di notifiche automatiche. Usare solo dati inventati.
+
+## Roadmap e punti di verifica
+
+1. **Interfaccia e flussi — implementato.** Verificare stile, leggibilità, navigazione e campi appuntamento su PC e iPhone.
+2. **Accesso multiutente.** Collegare Supabase Auth, recupero password e sessioni. Ogni utente accede soltanto ai propri dati tramite policy Row Level Security. Definire insieme se servono familiari/delegati e quali permessi.
+3. **Dati e documenti persistenti.** Database Postgres, storage privato PDF/JPG, verifica file lato server, collegamento documenti/visite e URL temporanei. Nessun dato sanitario in bucket pubblici; prima del caricamento reale verificare isolamento tra utenti, backup e ripristino.
+4. **Promemoria.** Confermare canale: email, push su iPhone oppure entrambi. Introdurre fuso Europe/Rome, coda persistente, pianificazione, retry e prevenzione invii duplicati. Verificare consegna anche ad app chiusa. I dettagli delle push su iPhone saranno verificati durante questo step.
+5. **Report definitivi, iPhone e Vercel.** Report per periodo, installazione dalla schermata Home, test reali su Safari, pubblicazione preview HTTPS e verifica condivisa. Successivamente produzione.
+
+## Pubblicazione su Vercel
+
+Importare questa cartella come progetto Next.js (root directory `sanitaria-web` se si pubblica la cartella contenitrice). Build `pnpm build`, output gestito automaticamente da Next.js. Lo step 01 non richiede variabili d'ambiente. Non sono stati creati account o deploy remoti.
+
+Per i prossimi step: Vercel ospiterà l'app; Supabase fornirà database, autenticazione e storage privato. Non si useranno SQLite o cartelle locali del server per la persistenza in Vercel.
+
+Riferimenti ufficiali: [Next.js su Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs), [Supabase con Next.js](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs).
