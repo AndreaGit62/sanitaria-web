@@ -1,5 +1,11 @@
 # Cura · Agenda sanitaria
 
+## Aggiornamento — Step 04
+
+Archivio privato PDF/JPG con upload diretto a Supabase (fino a 10 MB), verifica del file, apertura e download con link temporanei, ricerca, collegamento alle visite ed eliminazione. Richiede la nuova migrazione dello storage e dei documenti. Guida e prove: **[docs/STEP04.md](docs/STEP04.md)**.
+
+Le funzioni di recupero password ed email restano rimandate. Il test con due account su documenti e storage deve essere completato prima di considerare verificato l'isolamento remoto.
+
 ## Aggiornamento — Step 03
 
 Recupero password rimandato su richiesta. Accesso con account di prova creati dal proprietario in Supabase, senza SMTP. Agenda collegata a visite private online: calendario, ricerca, modifica, stato e report usano i dati dell'account. Documenti personali e notifiche automatiche restano ai prossimi step.

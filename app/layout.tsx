@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './auth.css';
+import './documents.css';
 
 export const metadata: Metadata = {
   title: 'Cura · La tua agenda della salute',
