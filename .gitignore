@@ -4,3 +4,8 @@ node_modules/
 !.env.example
 *.tsbuildinfo
 .vercel/
+
+# Repository di prova annidati, estranei al codice dell'app
+/sanitaria-web/
+/Sanitaria/
+/test/

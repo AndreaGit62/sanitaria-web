@@ -2,6 +2,12 @@
 
 Step 01: prototipo interattivo responsive in italiano, costruito con Next.js, React e TypeScript e predisposto per Vercel. La precedente applicazione `../WebAppSanitaria` non viene modificata.
 
+## Direzione del progetto: PWA
+
+L'app sarà sviluppata come Progressive Web App per PC e iPhone. Questa prima bozza contiene l'interfaccia responsive: manifest, icone per l'installazione, service worker e notifiche push non sono ancora implementati. Verranno aggiunti e verificati nei prossimi step, con prova su Safari di un iPhone reale. L'eventuale funzionamento offline sarà definito insieme; i documenti sanitari non saranno memorizzati automaticamente nelle cache offline.
+
+Repository del progetto: [AndreaGit62/sanitaria-web](https://github.com/AndreaGit62/sanitaria-web). La radice locale corretta è la cartella che contiene questo README, `package.json` e `app/`. Le sottocartelle `sanitaria-web/`, `Sanitaria/` e `test/` sono repository di prova separati e sono escluse dal caricamento.
+
 ## Stato della verifica
 
 Dipendenze installate con pnpm; controllo TypeScript e build di produzione completati con esito positivo. Demo avviata su http://localhost:3000 e verificata nel browser. Controllati dashboard, navigazione delle sei sezioni, creazione e modifica di una visita dimostrativa, persistenza dopo ricaricamento, ricerca, cambio mese e validazione dell'orario del promemoria.
