@@ -9,6 +9,6 @@ export default async function PasswordPage() {
   if (!authConfigured()) redirect('/login');
   const supabase = await createSupabase();
   const {data:{user},error} = await supabase.auth.getUser();
-  if (error || !user) redirect('/login?mode=recover');
+  if (error || !user) redirect('/login');
   return <AuthShell title="Una nuova password." description="Dopo il salvataggio dovrai accedere di nuovo. Le altre sessioni verranno revocate."><AuthForm mode="password"/><Link className="auth-demo-link" href="/">Torna al tuo spazio →</Link></AuthShell>;
 }

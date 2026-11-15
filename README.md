@@ -1,5 +1,11 @@
 # Cura · Agenda sanitaria
 
+## Aggiornamento — Step 03
+
+Recupero password rimandato su richiesta. Accesso con account di prova creati dal proprietario in Supabase, senza SMTP. Agenda collegata a visite private online: calendario, ricerca, modifica, stato e report usano i dati dell'account. Documenti personali e notifiche automatiche restano ai prossimi step.
+
+È necessaria la nuova migrazione SQL degli appuntamenti. Istruzioni e limiti aggiornati: **[docs/STEP03.md](docs/STEP03.md)**. Le indicazioni email della sezione Step 02 sottostante sono conservate come riferimento futuro e non sono richieste per queste prove.
+
 ## Step 02 — Accesso personale (predisposto)
 
 Nuove schermate in `/login` per registrazione, accesso e recupero password, conferma email lato server e profilo privato. Collegamento con Supabase Auth tramite cookie SSR e tabella `profiles` protetta da RLS. Configurazione e verifica con due account: **[docs/SUPABASE.md](docs/SUPABASE.md)**.

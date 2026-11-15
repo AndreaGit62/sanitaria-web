@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabase } from '../../../lib/supabase/server';
-import { authConfigured } from '../../../lib/supabase/config';
+import { authConfigured, emailSignupEnabled } from '../../../lib/supabase/config';
 export async function GET(request: NextRequest) {
   const token_hash = request.nextUrl.searchParams.get('token_hash');
   const type = request.nextUrl.searchParams.get('type');
@@ -9,13 +9,12 @@ export async function GET(request: NextRequest) {
   destination.search = '';
   destination.pathname = '/login';
   destination.searchParams.set('notice', 'invalid-link');
-  if (authConfigured() && token_hash && (type === 'signup' || type === 'recovery' || type === 'email')) {
+  if (authConfigured() && emailSignupEnabled() && token_hash && (type === 'signup' || type === 'email')) {
     const supabase = await createSupabase();
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (!error) {
       destination.search = '';
-      if (type === 'recovery') destination.pathname = '/account/password';
-      else {
+      {
         await supabase.auth.signOut({ scope: 'local' });
         destination.searchParams.set('notice', 'confirmed');
       }

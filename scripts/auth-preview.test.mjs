@@ -1,15 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// Eseguire contro una preview locale SENZA variabili Supabase.
+// Eseguire contro una preview locale, senza sessione utente.
 const base = process.env.CURA_PREVIEW_URL || 'http://localhost:3001';
-test('senza configurazione i moduli non accettano credenziali', async () => {
+test('recupero e registrazione via email non sono proposti nel login', async () => {
   const response = await fetch(`${base}/login`);
   assert.equal(response.status,200);
   const html = await response.text();
-  assert.ok(html.includes('Collegamento a Supabase da completare'));
-  assert.ok(/<input(?=[^>]*\bname="email")(?=[^>]*\bdisabled)[^>]*>/.test(html),'Campo email disabilitato');
-  assert.ok(/<input(?=[^>]*\bname="password")(?=[^>]*\bdisabled)[^>]*>/.test(html),'Campo password disabilitato');
+  assert.ok(!/<a[^>]*href="\/login\?mode=recover"/.test(html));
+  assert.ok(!/<a[^>]*href="\/login\?mode=register"/.test(html));
+  assert.ok(html.includes('Accesso riservato agli utenti abilitati.'));
+});
+test('la vecchia URL di recupero non permette di inviare email',async()=>{
+  const html=await (await fetch(`${base}/login?mode=recover`)).text();
+  assert.ok(html.includes('Registrazione e recupero via email sono rimandati.'));
+  assert.ok(!html.includes('Invia il link di recupero'));
 });
 test('il cambio password è protetto anche entrando direttamente dalla URL', async () => {
   const response = await fetch(`${base}/account/password`,{redirect:'manual'});

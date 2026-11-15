@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createSupabase } from '../../lib/supabase/server';
-import { authConfigured, siteUrl } from '../../lib/supabase/config';
+import { authConfigured, siteUrl, emailSignupEnabled } from '../../lib/supabase/config';
 
 export type AuthState = { error?: string; message?: string };
 const unavailable = { error: 'Accesso non ancora attivo. Completa il collegamento a Supabase.' };
@@ -24,6 +24,7 @@ export async function login(_: AuthState, f: FormData): Promise<AuthState> {
 }
 
 export async function register(_: AuthState, f: FormData): Promise<AuthState> {
+  if (!emailSignupEnabled()) return {error:'Registrazione via email non ancora disponibile. Usa un account già abilitato.'};
   if (!authConfigured()) return unavailable;
   const email = text(f, 'email'), name = text(f, 'name'), password = String(f.get('password') ?? '');
   if (!emailValid(email) || !name || name.length > 80) return { error: 'Inserisci il tuo nome (massimo 80 caratteri) e un’email valida.' };
@@ -32,22 +33,10 @@ export async function register(_: AuthState, f: FormData): Promise<AuthState> {
   try {
     const supabase = await createSupabase();
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: `${siteUrl()}/auth/confirm` } });
-    if (error) return { error: 'Registrazione non riuscita. Riprova più tardi o usa il recupero password.' };
+    if (error) return { error: 'Registrazione non riuscita. Riprova più tardi.' };
     if (data.session) await supabase.auth.signOut({ scope: 'local' });
-    return { message: 'Richiesta ricevuta. Controlla la posta e conferma l’email prima di accedere. Se hai già un account, usa Accedi o Recupera password.' };
+    return { message: 'Richiesta ricevuta. Controlla la posta e conferma l’email prima di accedere. Se hai già un account, usa Accedi.' };
   } catch { return { error: 'Registrazione non disponibile. Verifica la configurazione del servizio.' }; }
-}
-
-export async function recover(_: AuthState, f: FormData): Promise<AuthState> {
-  if (!authConfigured()) return unavailable;
-  const email = text(f, 'email');
-  if (!emailValid(email)) return { error: 'Inserisci un’email valida.' };
-  try {
-    const supabase = await createSupabase();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl()}/auth/confirm` });
-    if (error) return { error: 'Richiesta non disponibile. Riprova tra poco.' };
-    return { message: 'Se l’indirizzo è associato a un account, riceverai un’email per scegliere una nuova password.' };
-  } catch { return { error: 'Servizio non raggiungibile. Riprova tra poco.' }; }
 }
 
 export async function changePassword(_: AuthState, f: FormData): Promise<AuthState> {
@@ -58,9 +47,9 @@ export async function changePassword(_: AuthState, f: FormData): Promise<AuthSta
   try {
     const supabase = await createSupabase();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { error: 'Sessione scaduta. Richiedi un nuovo link di recupero.' };
+    if (authError || !user) return { error: 'Sessione scaduta. Accedi di nuovo.' };
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) return { error: 'Password non aggiornata. Scegline una diversa o richiedi un nuovo link.' };
+    if (error) return { error: 'Password non aggiornata. Scegline una diversa o accedi di nuovo.' };
     const {error: signOutError} = await supabase.auth.signOut({ scope: 'global' });
     if (signOutError) return {error:'Password aggiornata, ma uscita dalle altre sessioni non riuscita. Riprova a uscire.'};
   } catch { return { error: 'Servizio non raggiungibile. Riprova tra poco.' }; }
