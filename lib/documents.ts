@@ -31,6 +31,6 @@ export function documentFromRow(row: Record<string, unknown>): PrivateDocument {
     createdAt:String(row.created_at),status:row.status as PrivateDocument['status'],version:Number(row.version),
     appointmentId:row.appointment_id ? String(row.appointment_id) : null,
     appointmentTitle:appointment ? String(appointment.title) : undefined,
-    appointmentDate:appointment ? String(appointment.date) : undefined,
+    appointmentDate:appointment?.date ? String(appointment.date) : undefined,
   };
 }

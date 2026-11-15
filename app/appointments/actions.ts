@@ -15,6 +15,7 @@ async function session() {
   return { db, user };
 }
 function databaseError(code: string) {
+  if(code==='PGRST204'||code==='42703')return 'Per le visite da prenotare serve il nuovo aggiornamento SQL in Supabase.';
   if (code === 'PGRST205' || code === '42P01') return 'Archivio appuntamenti da attivare. Esegui la configurazione dello step 3 in Supabase.';
   if (code === '42501') return 'Operazione non consentita. Accedi di nuovo e verifica la configurazione dell’archivio.';
   if (code === '23514' || code === '22007') return 'Controlla i campi: data, ora e promemoria non sono validi.';
@@ -27,7 +28,8 @@ export async function saveAppointment(input: unknown, id?: string, version?: num
   if (id !== undefined && (!validId(id) || !Number.isSafeInteger(version) || version! < 1)) return { error:'Identificativo dell’appuntamento non valido.' };
   try {
     const { db, user } = await session();
-    const data = { ...visit, reminder:visit.reminder || null };
+    const {bookingStatus,...fields}=visit;
+    const data = { ...fields, booking_status:bookingStatus, date:visit.date||null, time:visit.time||null, reminder:visit.reminder || null };
     const response = id
       ? await db.from('appointments').update({ ...data, version:version! + 1 }).eq('id',id).eq('user_id',user.id).eq('version',version!).select().maybeSingle()
       : await db.from('appointments').insert({ ...data, user_id:user.id }).select().single();
@@ -42,7 +44,7 @@ export async function setAppointmentStatus(id: string, version: number, done: bo
   if (!validId(id) || !Number.isSafeInteger(version) || version < 1 || typeof done !== 'boolean') return {error:'Appuntamento non valido.'};
   try {
     const { db, user } = await session();
-    const {data,error} = await db.from('appointments').update({done,version:version+1}).eq('id',id).eq('user_id',user.id).eq('version',version).select().maybeSingle();
+    const {data,error} = await db.from('appointments').update({done,version:version+1}).eq('id',id).eq('user_id',user.id).eq('booking_status','confirmed').eq('version',version).select().maybeSingle();
     if (error) return {error:databaseError(error.code)};
     if (!data) return {error:conflict};
     revalidatePath('/');

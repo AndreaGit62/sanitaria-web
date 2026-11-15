@@ -10,7 +10,7 @@ test('le proprietà del proprietario inviate dal browser non entrano nei dati sa
 });
 test('date impossibili e orari malformati vengono rifiutati', () => {
   for (const date of ['2027-02-29','2028-02-30','2028-13-01','1899-12-31','2101-01-01','2028-2-01']) assert.throws(()=>parseVisit({...good,date}));
-  for (const time of ['24:00','12:60','9:30','10:30:00','']) assert.throws(()=>parseVisit({...good,time}));
+  for (const time of ['24:00','12:60','9:30','10:30:00']) assert.throws(()=>parseVisit({...good,time}));
 });
 test('promemoria successivi o uguali alla visita non vengono salvati', () => {
   for (const reminder of ['2028-02-29T10:30','2028-03-01T09:00','2028-02-30T09:00','2028-02-28T25:00']) assert.throws(()=>parseVisit({...good,reminder}));
@@ -27,4 +27,32 @@ test('normalizzazione degli orari restituiti da Postgres per modifica e calendar
 test('gli identificativi degli appuntamenti remoti devono essere UUID',()=>{
   assert.ok(validId('f9ae2a8f-d920-48fb-8d2c-e599ff3346b3'));
   for(const id of ['demo-1','',null,'../../appointments'])assert.equal(validId(id),false);
+});
+
+test('visite da prenotare ammettono data e struttura ancora da definire',()=>{
+  const draft={...good,bookingStatus:'pending',date:'',time:'',hospital:'',reminder:'',done:true};
+  for(const partial of [{},{date:good.date},{hospital:good.hospital}]){
+    const parsed=parseVisit({...draft,...partial});
+    assert.equal(parsed.bookingStatus,'pending');assert.equal(parsed.done,false);
+    assert.equal(parsed.title,good.title);
+  }
+  assert.throws(()=>parseVisit({...draft,reminder:good.reminder}));
+  assert.throws(()=>parseVisit({...draft,date:'2027-02-29'}));
+  assert.throws(()=>parseVisit({...draft,bookingStatus:'inventato'}));
+});
+test('data e struttura promuovono la visita preservando note e dettagli',()=>{
+  const parsed=parseVisit({...good,bookingStatus:'pending',time:'',reminder:'',notes:'Portare prescrizione'});
+  assert.equal(parsed.bookingStatus,'confirmed');assert.equal(parsed.time,'');
+  assert.equal(parsed.notes,'Portare prescrizione');assert.equal(parsed.hospital,good.hospital);
+  assert.throws(()=>parseVisit({...good,date:''}));
+});
+test('orario facoltativo e promemoria prima del giorno della visita',()=>{
+  assert.equal(parseVisit({...good,time:''}).bookingStatus,'confirmed');
+  assert.throws(()=>parseVisit({...good,time:'',reminder:'2028-02-29T00:00'}));
+});
+test('righe da prenotare senza data o ora non producono stringhe null',()=>{
+  const mapped=fromRow({...good,date:null,time:null,reminder:null,booking_status:'pending'});
+  assert.equal(mapped.date,'');assert.equal(mapped.time,'');assert.equal(mapped.reminder,'');
+  assert.equal(mapped.bookingStatus,'pending');
+  assert.equal(fromRow({...good}).bookingStatus,'confirmed');
 });

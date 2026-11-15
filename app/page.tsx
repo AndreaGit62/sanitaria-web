@@ -14,7 +14,7 @@ export default async function Home({searchParams}: {searchParams:Promise<{notice
   if (error || !user) redirect('/login');
   const [profile, visits, documents] = await Promise.all([
     db.from('profiles').select('display_name').eq('id',user.id).maybeSingle(),
-    db.from('appointments').select('*',{count:'exact'}).eq('user_id',user.id).order('date',{ascending:false}).order('id').limit(500),
+    db.from('appointments').select('*',{count:'exact'}).eq('user_id',user.id).order('date',{ascending:false,nullsFirst:true}).order('id').limit(500),
     db.from('documents').select('*, appointment:appointments(title,date)',{count:'exact'}).eq('user_id',user.id).order('created_at',{ascending:false}).order('id').limit(500),
   ]);
   const name = profile.data?.display_name || String(user.user_metadata.name || 'Benvenuto');

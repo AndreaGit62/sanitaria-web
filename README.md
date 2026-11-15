@@ -1,5 +1,9 @@
 # Cura · Agenda sanitaria
 
+## Aggiornamento — Visite da prenotare
+
+Nuovo elenco per le prestazioni ancora da organizzare, con note e allegati. Completando data e struttura, la visita passa automaticamente tra le confermate e nel calendario. Ora facoltativa e modulo adattato per evitare lo scorrimento laterale su iPhone. Richiede la migrazione `202611150004_pending_appointments.sql`; procedura e prove in **[docs/PRENOTAZIONI.md](docs/PRENOTAZIONI.md)**.
+
 ## Aggiornamento — Step 04
 
 Archivio privato PDF/JPG con upload diretto a Supabase (fino a 10 MB), verifica del file, apertura e download con link temporanei, ricerca, collegamento alle visite ed eliminazione. Richiede la nuova migrazione dello storage e dei documenti. Guida e prove: **[docs/STEP04.md](docs/STEP04.md)**.
