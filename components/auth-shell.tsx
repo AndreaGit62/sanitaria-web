@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import { Plus, ShieldCheck, Heart } from 'lucide-react';
+export default function AuthShell({title, description, children}: {title:string;description:string;children:React.ReactNode}) {
+  return <div className="auth-shell"><aside className="auth-story"><Link href="/" className="brand"><span className="brand-icon"><Plus size={24}/></span>cura.</Link><div><span className="auth-kicker">IL TUO SPAZIO PERSONALE</span><h1>Prendersi cura di sé.<br/>Con un pensiero in meno.</h1><p>Un unico posto per ritrovare il tuo percorso di salute, dal computer e dall’iPhone.</p><div className="auth-trust"><ShieldCheck size={20}/> Accesso personale con email e password</div></div><span className="auth-story-footer"><Heart size={16}/> Un po’ di ordine, un po’ di serenità.</span></aside><main className="auth-main"><section className="auth-card"><span className="auth-kicker">BENVENUTO IN CURA</span><h1>{title}</h1><p>{description}</p>{children}</section><p className="auth-bottom">Step 02 · Accesso personale · Usa dati di prova</p></main></div>;
+}

@@ -1,5 +1,13 @@
 # Cura · Agenda sanitaria
 
+## Step 02 — Accesso personale (predisposto)
+
+Nuove schermate in `/login` per registrazione, accesso e recupero password, conferma email lato server e profilo privato. Collegamento con Supabase Auth tramite cookie SSR e tabella `profiles` protetta da RLS. Configurazione e verifica con due account: **[docs/SUPABASE.md](docs/SUPABASE.md)**.
+
+Il proprietario ha creato il progetto Supabase `cura-sanitaria`: il collegamento è da configurare, e registrazione, email e isolamento reale restano da verificare. Finché mancano le variabili d'ambiente, la home resta in modalità demo e i moduli di accesso sono disabilitati. Una volta configurata, la home richiede login; la demo resta disponibile separatamente in `/demo`. Appuntamenti e documenti remoti arriveranno negli step successivi.
+
+Controllo TypeScript e build dello step 02 riusciti; schermate di login, registrazione e recupero verificate nel browser su layout mobile e desktop. Passati sei test HTTP locali sui moduli disattivati, sulla protezione del cambio password e sul rifiuto dei link email non validi. Il test reale con due utenti richiede la configurazione Supabase descritta nella guida.
+
 Step 01: prototipo interattivo responsive in italiano, costruito con Next.js, React e TypeScript e predisposto per Vercel. La precedente applicazione `../WebAppSanitaria` non viene modificata.
 
 ## Direzione del progetto: PWA
