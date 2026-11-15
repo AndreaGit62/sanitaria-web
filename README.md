@@ -1,4 +1,8 @@
-# Cura · Agenda sanitaria
+# VisiLab · Agenda sanitaria
+
+## Identità VisiLab
+
+Nome aggiornato nell’interfaccia, nei metadati e nel manifest di installazione. Favicon multirisoluzione e icona iPhone a 180 px, con icone app a 192 e 512 px. Sorgente vettoriale: `public/brand/visilab.svg`; rigenerazione con `node scripts/generate-brand-icons.mjs`. Per aggiornare un collegamento Home già installato su iPhone, rimuoverlo e aggiungerlo nuovamente da Safari dopo il deploy. Le visite e gli allegati restano nell’account Supabase.
 
 ## Aggiornamento — Visite da prenotare
 
@@ -28,7 +32,7 @@ Step 01: prototipo interattivo responsive in italiano, costruito con Next.js, Re
 
 ## Direzione del progetto: PWA
 
-L'app sarà sviluppata come Progressive Web App per PC e iPhone. Questa prima bozza contiene l'interfaccia responsive: manifest, icone per l'installazione, service worker e notifiche push non sono ancora implementati. Verranno aggiunti e verificati nei prossimi step, con prova su Safari di un iPhone reale. L'eventuale funzionamento offline sarà definito insieme; i documenti sanitari non saranno memorizzati automaticamente nelle cache offline.
+L'app sarà sviluppata come Progressive Web App per PC e iPhone. Sono presenti interfaccia responsive, manifest e icone per l’installazione. Service worker e notifiche push restano da implementare nei prossimi step. L'eventuale funzionamento offline sarà definito insieme; i documenti sanitari non saranno memorizzati automaticamente nelle cache offline.
 
 Repository del progetto: [AndreaGit62/sanitaria-web](https://github.com/AndreaGit62/sanitaria-web). La radice locale corretta è la cartella che contiene questo README, `package.json` e `app/`. Le sottocartelle `sanitaria-web/`, `Sanitaria/` e `test/` sono repository di prova separati e sono escluse dal caricamento.
 
@@ -42,7 +46,7 @@ La verifica di questo step non copre ancora caricamento/anteprima dei file, down
 
 ## Avvio
 
-Su questo PC puoi fare doppio clic su **Avvia Cura.cmd**: trova anche il runtime Node incluso in Codex. Il server già aperto su porta 3000 deve essere fermato prima di avviarne un altro. Il file mantiene aperta la console durante l'uso.
+Su questo PC puoi fare doppio clic su **Avvia VisiLab.cmd**: trova anche il runtime Node incluso in Codex. Il server già aperto su porta 3000 deve essere fermato prima di avviarne un altro. Il file mantiene aperta la console durante l'uso.
 
 Per un'installazione su un altro PC: Node.js 22 LTS o successivo e pnpm. Il lockfile `pnpm-lock.yaml` registra le versioni installate.
 

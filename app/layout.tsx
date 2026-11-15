@@ -4,9 +4,14 @@ import './auth.css';
 import './documents.css';
 
 export const metadata: Metadata = {
-  title: 'Cura · La tua agenda della salute',
-  description: 'Appuntamenti, documenti e promemoria, in un unico posto. Prototipo dimostrativo.',
-  appleWebApp: { capable: true, title: 'Cura', statusBarStyle: 'default' },
+  title: 'VisiLab · La tua agenda della salute',
+  applicationName: 'VisiLab',
+  description: 'Appuntamenti, documenti e promemoria, in un unico posto.',
+  icons: {
+    icon: [{url:'/brand/visilab.svg',type:'image/svg+xml'}],
+    apple: [{url:'/apple-icon.png',sizes:'180x180',type:'image/png'}],
+  },
+  appleWebApp: { capable: true, title: 'VisiLab', statusBarStyle: 'default' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#f6f8fa' };
 export default function RootLayout({ children }: Readonly<{children: React.ReactNode}>) {
