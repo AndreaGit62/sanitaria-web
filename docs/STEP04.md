@@ -11,6 +11,8 @@
 
 ## Comportamento
 
+La graffetta dell'appuntamento apre una finestra con il solo elenco dei file già caricati per quella visita, con Apri e Scarica. Il pulsante **Carica doc**, tra Annulla e Salva appuntamento, salva prima i dati validi della visita e apre una finestra dedicata all'upload: i nuovi file vengono collegati automaticamente. Aprire e richiudere l'elenco allegati conserva le modifiche non salvate nel modulo. L'archivio generale Documenti mantiene le funzioni complete di ricerca, collegamento ed eliminazione.
+
 - File fino a 10 MB, massimo cinque alla volta, caricati in sequenza. L'app accetta PDF e JPG/JPEG, controllando metadati e firma iniziale del file; PNG/HEIC non vengono convertiti automaticamente.
 - Prima dell'upload, il server verifica la sessione, l'eventuale visita proprietaria e crea una prenotazione `pending` con percorso casuale sotto l'ID dell'utente. Il nome originale non fa parte del percorso storage.
 - Il server genera un'autorizzazione di upload firmata per quel percorso. Il browser invia il contenuto direttamente a Supabase: non passa nel corpo di una funzione Vercel. Non servono chiavi `service_role`.
