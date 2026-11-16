@@ -26,6 +26,5 @@ export default async function LoginPage({searchParams}: {searchParams:Promise<{m
     {(mode === 'recover' || (mode === 'register' && !emailSignupEnabled())) && <p className="auth-alert setup" role="status">Registrazione e recupero via email sono rimandati. Puoi accedere con un account già abilitato.</p>}
     <AuthForm key={active} mode={active} appointment={validId(appointment)?appointment:undefined} disabled={!configured}/>
     <div className="auth-links">{active === 'register' ? <Link href="/login">Hai già un account? Accedi</Link> : emailSignupEnabled() ? <span>Non hai un account? <Link href="/login?mode=register">Registrati</Link></span> : <span>Accesso riservato agli utenti abilitati.</span>}</div>
-    <Link className="auth-demo-link" href="/demo">Esplora la demo con dati inventati →</Link>
   </AuthShell>;
 }
