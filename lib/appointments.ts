@@ -1,3 +1,9 @@
+import { Temporal } from '@js-temporal/polyfill';
+
+export function reminderEpoch(value:string):number {
+  try{return Temporal.PlainDateTime.from(value).toZonedDateTime('Europe/Rome',{disambiguation:'reject'}).epochMilliseconds;}
+  catch{throw new Error('Questo orario del promemoria non esiste o è ambiguo per il cambio dell’ora. Scegli un altro orario.');}
+}
 export const specialties = ['Cardiologia', 'Laboratorio', 'Oculistica', 'Dermatologia', 'Altra visita'] as const;
 export type Visit = {
   id: string; title: string; specialty: string; hospital: string; date: string;
@@ -31,6 +37,7 @@ export function parseVisit(value: unknown): VisitInput {
   if(bookingStatus==='confirmed'&&(!date||!hospital))throw new Error('Per confermare la visita inserisci data e struttura.');
   if (reminder && (reminder.length !== 16 || reminder[10] !== 'T' || !validDate(reminder.slice(0,10)) || !validTime(reminder.slice(11)))) throw new Error('Data del promemoria non valida.');
   if(reminder&&bookingStatus==='pending')throw new Error('Imposta il promemoria dopo aver confermato data e struttura.');
+  if(reminder)reminderEpoch(reminder);
   if (reminder && reminder >= `${date}T${time||'00:00'}`) throw new Error(time?'Il promemoria deve precedere l’appuntamento.':'Senza un orario, il promemoria deve precedere il giorno della visita.');
   const specialty = field('specialty', 30, true);
   if (!(specialties as readonly string[]).includes(specialty) || typeof v.done !== 'boolean') throw new Error('Specialità o stato della visita non validi.');

@@ -1,5 +1,9 @@
 # VisiLab · Agenda sanitaria
 
+## Avvisi automatici
+
+Attivazione per dispositivo, prova Web Push e promemoria con testo discreto. Worker protetto su Vercel, scheduler ogni minuto in Supabase e controllo della visita prima di ogni invio. Il codice richiede la migrazione `202611160005_push_notifications.sql`, le variabili private e l'attivazione del job: **[configurazione e prove](docs/NOTIFICHE.md)**. La consegna reale su iPhone va verificata dopo l'attivazione; il codice da solo non abilita gli invii.
+
 ## Identità VisiLab
 
 Nome aggiornato nell’interfaccia, nei metadati e nel manifest di installazione. Favicon multirisoluzione e icona iPhone a 180 px, con icone app a 192 e 512 px. Sorgente vettoriale: `public/brand/visilab.svg`; rigenerazione con `node scripts/generate-brand-icons.mjs`. Per aggiornare un collegamento Home già installato su iPhone, rimuoverlo e aggiungerlo nuovamente da Safari dopo il deploy. Le visite e gli allegati restano nell’account Supabase.

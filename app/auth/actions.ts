@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createSupabase } from '../../lib/supabase/server';
 import { authConfigured, siteUrl, emailSignupEnabled } from '../../lib/supabase/config';
+import { cookies } from 'next/headers';
+import { validId } from '../../lib/appointments';
+import { pushDeviceCookie } from '../../lib/push-server';
 
 export type AuthState = { error?: string; message?: string };
 const unavailable = { error: 'Accesso non ancora attivo. Completa il collegamento a Supabase.' };
@@ -20,7 +23,8 @@ export async function login(_: AuthState, f: FormData): Promise<AuthState> {
     if (error) return { error: 'Accesso non riuscito. Controlla le credenziali e la conferma dell’email.' };
   } catch { return { error: 'Servizio non raggiungibile. Riprova tra poco.' }; }
   revalidatePath('/', 'layout');
-  redirect('/');
+  const appointment=text(f,'appointment');
+  redirect(validId(appointment)?`/?appointment=${appointment}`:'/');
 }
 
 export async function register(_: AuthState, f: FormData): Promise<AuthState> {
@@ -50,6 +54,9 @@ export async function changePassword(_: AuthState, f: FormData): Promise<AuthSta
     if (authError || !user) return { error: 'Sessione scaduta. Accedi di nuovo.' };
     const { error } = await supabase.auth.updateUser({ password });
     if (error) return { error: 'Password non aggiornata. Scegline una diversa o accedi di nuovo.' };
+    const {error:pushError}=await supabase.from('push_subscriptions').delete().eq('user_id',user.id);
+    if(pushError&&!['42P01','PGRST205'].includes(pushError.code))return {error:'Password aggiornata. Disattivazione degli avvisi non riuscita: riprova a uscire.'};
+    (await cookies()).delete(pushDeviceCookie);
     const {error: signOutError} = await supabase.auth.signOut({ scope: 'global' });
     if (signOutError) return {error:'Password aggiornata, ma uscita dalle altre sessioni non riuscita. Riprova a uscire.'};
   } catch { return { error: 'Servizio non raggiungibile. Riprova tra poco.' }; }
@@ -76,6 +83,12 @@ export async function saveProfile(_: AuthState, f: FormData): Promise<AuthState>
 export async function logout() {
   if (authConfigured()) {
     const supabase = await createSupabase();
+    const store=await cookies(),deviceId=store.get(pushDeviceCookie)?.value;
+    if(validId(deviceId)){
+      const {error:pushError}=await supabase.from('push_subscriptions').delete().eq('id',deviceId);
+      if(pushError)redirect('/?notice=logout-error');
+      store.delete(pushDeviceCookie);
+    }
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) redirect('/?notice=logout-error');
   }

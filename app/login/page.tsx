@@ -4,16 +4,17 @@ import AuthShell from '../../components/auth-shell';
 import AuthForm from '../../components/auth-form';
 import { authConfigured, emailSignupEnabled } from '../../lib/supabase/config';
 import { createSupabase } from '../../lib/supabase/server';
+import { validId } from '../../lib/appointments';
 export const dynamic = 'force-dynamic';
 
-export default async function LoginPage({searchParams}: {searchParams:Promise<{mode?:string;notice?:string}>}) {
-  const {mode, notice} = await searchParams;
+export default async function LoginPage({searchParams}: {searchParams:Promise<{mode?:string;notice?:string;appointment?:string}>}) {
+  const {mode, notice, appointment} = await searchParams;
   const active = mode === 'register' && emailSignupEnabled() ? 'register' : 'login';
   const configured = authConfigured();
   if (configured) {
     const supabase = await createSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) redirect('/');
+    if (user) redirect(validId(appointment)?`/?appointment=${appointment}`:'/');
   }
   const titles = {login:'Bentornato.',register:'Il tuo spazio, da oggi.',recover:'Ritroviamo il tuo accesso.'};
   const descriptions = {login:'Accedi con la tua email per entrare nel tuo spazio personale.',register:'Crea un account personale e conferma la tua email.',recover:'Ti invieremo un link per scegliere una nuova password.'};
@@ -23,7 +24,7 @@ export default async function LoginPage({searchParams}: {searchParams:Promise<{m
     {notice === 'password-updated' && <p className="auth-alert success" role="status">Password aggiornata. Accedi con la nuova password.</p>}
     {notice === 'invalid-link' && <p className="auth-alert error" role="alert">Link non valido o non disponibile. Accedi con un account già abilitato.</p>}
     {(mode === 'recover' || (mode === 'register' && !emailSignupEnabled())) && <p className="auth-alert setup" role="status">Registrazione e recupero via email sono rimandati. Puoi accedere con un account già abilitato.</p>}
-    <AuthForm key={active} mode={active} disabled={!configured}/>
+    <AuthForm key={active} mode={active} appointment={validId(appointment)?appointment:undefined} disabled={!configured}/>
     <div className="auth-links">{active === 'register' ? <Link href="/login">Hai già un account? Accedi</Link> : emailSignupEnabled() ? <span>Non hai un account? <Link href="/login?mode=register">Registrati</Link></span> : <span>Accesso riservato agli utenti abilitati.</span>}</div>
     <Link className="auth-demo-link" href="/demo">Esplora la demo con dati inventati →</Link>
   </AuthShell>;

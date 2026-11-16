@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { authConfigured } from '../../lib/supabase/config';
 import { createSupabase } from '../../lib/supabase/server';
-import { fromRow, parseVisit, validId, type Visit } from '../../lib/appointments';
+import { fromRow, parseVisit, reminderEpoch, validId, type Visit } from '../../lib/appointments';
 
 type Result = { error: string; visit?: never; id?: never } | { error?: never; visit?: Visit; id?: string };
 const conflict = 'Appuntamento modificato o rimosso da un altro dispositivo. Aggiorna l’agenda prima di riprovare.';
@@ -28,6 +28,10 @@ export async function saveAppointment(input: unknown, id?: string, version?: num
   if (id !== undefined && (!validId(id) || !Number.isSafeInteger(version) || version! < 1)) return { error:'Identificativo dell’appuntamento non valido.' };
   try {
     const { db, user } = await session();
+    if(visit.reminder&&reminderEpoch(visit.reminder)<=Date.now()){
+      const previous=id?await db.from('appointments').select('reminder').eq('user_id',user.id).eq('id',id).eq('version',version!).maybeSingle():null;
+      if(!previous?.data?.reminder||String(previous.data.reminder).slice(0,16)!==visit.reminder)return {error:'Scegli un giorno e un’ora futuri per il nuovo promemoria.'};
+    }
     const {bookingStatus,...fields}=visit;
     const data = { ...fields, booking_status:bookingStatus, date:visit.date||null, time:visit.time||null, reminder:visit.reminder || null };
     const response = id
