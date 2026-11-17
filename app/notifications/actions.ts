@@ -4,6 +4,8 @@ import { createSupabase } from '../../lib/supabase/server';
 import { validId } from '../../lib/appointments';
 import { allowedPushEndpoint, notificationPayload, parsePushDevice } from '../../lib/push-validation';
 import { clearPushCookie, pushConfiguration, rememberPushDevice, sendPush } from '../../lib/push-server';
+import { headers } from 'next/headers';
+import { isIphone, isApplePushEndpoint } from '../../lib/push-device-policy';
 
 async function session(){
   const db=await createSupabase();
@@ -30,8 +32,10 @@ export async function pushStatus(endpoint?:string) {
 
 export async function enablePush(input:unknown) {
   try{
+    if(!isIphone((await headers()).get('user-agent')||''))return {error:'Attiva i promemoria dal tuo iPhone personale.'};
     const config=pushConfiguration();if(!config)return {error:'Le notifiche devono ancora essere configurate.'};
     const device=parsePushDevice(input),{db}=await session();
+    if(!isApplePushEndpoint(device.endpoint))return {error:'Le notifiche sono disponibili soltanto su iPhone.'};
     const {data:id,error}=await db.rpc('register_visilab_push',{p_endpoint:device.endpoint,p_p256dh:device.keys.p256dh,p_auth:device.keys.auth,p_vapid:config.publicKey});
     if(error||!validId(id))return {error:'Dispositivo non abilitato. Riprova ad attivarlo; sono consentiti fino a 10 dispositivi per account.'};
     await rememberPushDevice(id);return {id};
@@ -51,10 +55,12 @@ export async function disablePush(endpoint:string) {
 export async function testPush(id:string) {
   if(!validId(id))return {error:'Dispositivo non valido.'};
   try{
+    if(!isIphone((await headers()).get('user-agent')||''))return {error:'Invia la prova dal tuo iPhone personale.'};
     const {db,user}=await session();
     const {data,error}=await db.rpc('claim_visilab_push_test',{p_id:id});
     if(error)return {error:'Prova non disponibile. Verifica la configurazione delle notifiche.'};
     if(!data)return {error:'Attendi un minuto prima di ripetere la prova, oppure riattiva le notifiche.'};
+    if(!isApplePushEndpoint(data.endpoint))return {error:'Le notifiche sono disponibili soltanto su iPhone.'};
     if(data.vapidPublicKey!==process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)return {error:'Riattiva le notifiche su questo dispositivo.'};
     const result=await sendPush(data,notificationPayload());
     if(result.expired){await db.from('push_subscriptions').delete().eq('id',id).eq('user_id',user.id);return {error:'Autorizzazione scaduta. Disattiva e riattiva le notifiche.'};}

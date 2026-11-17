@@ -36,9 +36,22 @@ before(async()=>{
   for(const file of ['202611150002_appointments.sql','202611150004_pending_appointments.sql','202611160005_push_notifications.sql'])await db.exec(await readFile(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'));
   // The notifications migration must also be safe when pasted a second time.
   await db.exec(await readFile(new URL('../supabase/migrations/202611160005_push_notifications.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/202611170006_iphone_notifications.sql',import.meta.url),'utf8'));
 });
 beforeEach(async()=>{await asAdmin();await db.exec('truncate auth.users cascade;update public.push_scheduler_status set last_run_at=null');await db.query('insert into auth.users(id) values($1),($2)',[first,second]);});
 after(async()=>{await db?.close();});
+
+test('aggiornamento iPhone conserva telefoni e visite, elimina i vecchi PC e ne impedisce la registrazione',async()=>{
+  const iphone=await device(),appointment=await visit();await asAdmin();
+  await db.query('insert into public.push_subscriptions(user_id,endpoint,p256dh,auth,vapid_public_key) values($1,$2,$3,$4,$5)',[first,'https://fcm.googleapis.com/desktop',key,auth,key]);
+  const migration=await readFile(new URL('../supabase/migrations/202611170006_iphone_notifications.sql',import.meta.url),'utf8');
+  await db.exec(migration);await db.exec(migration);
+  const subscriptions=await rows('select id from public.push_subscriptions');assert.deepEqual(subscriptions,[{id:iphone}]);
+  assert.equal((await rows('select id from public.appointments where id=$1',[appointment])).length,1);
+  await asUser(first);
+  await assert.rejects(()=>rows('select public.register_visilab_push($1,$2,$3,$4)',['https://fcm.googleapis.com/another-desktop',key,auth,key]),/non valido/);
+  assert.equal((await claim()).length,1);
+});
 
 test('RLS: un account non vede o elimina i dispositivi dell’altro; nessun accesso al worker',async()=>{
   const id=await device(first);await device(second);

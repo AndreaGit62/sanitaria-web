@@ -6,8 +6,18 @@ import {randomBytes} from 'node:crypto';
 import {generateVAPIDKeys,generateRequestDetails} from 'web-push';
 import {allowedPushEndpoint,notificationPayload,parsePushDevice} from '../lib/push-validation.ts';
 import {reminderEpoch} from '../lib/appointments.ts';
+import {isIphone,isIphoneApp,isApplePushEndpoint} from '../lib/push-device-policy.ts';
 
 const subscription={endpoint:'https://web.push.apple.com/test',keys:{p256dh:generateVAPIDKeys().publicKey,auth:randomBytes(16).toString('base64url')}};
+test('avvisi attivabili solo dall’app Home su iPhone, esclusi PC, iPad e Android',()=>{
+  const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148';
+  assert.ok(isIphoneApp(iphone,true));assert.equal(isIphoneApp(iphone,false),false);
+  for(const ua of ['Mozilla/5.0 (Windows NT 10.0; Win64; x64)','Mozilla/5.0 (Macintosh; Intel Mac OS X)','Mozilla/5.0 (iPad; CPU OS 18_0)','Mozilla/5.0 (Linux; Android 15)']){
+    assert.equal(isIphone(ua),false);assert.equal(isIphoneApp(ua,true),false);
+  }
+  assert.ok(isApplePushEndpoint(subscription.endpoint));
+  for(const endpoint of ['https://fcm.googleapis.com/send/test','https://updates.push.services.mozilla.com/test','https://web.push.apple.com.attacker.org/test','https://web.push.apple.com@attacker.org/test'])assert.equal(isApplePushEndpoint(endpoint),false);
+});
 test('valida le sottoscrizioni e blocca endpoint locali, redirect e host estranei',()=>{
   assert.deepEqual(parsePushDevice({...subscription,user_id:'forzato'}),subscription);
   for(const url of ['http://web.push.apple.com/x','https://127.0.0.1/x','https://web.push.apple.com.attacker.org/x','https://web.push.apple.com@attacker.org/x','https://web.push.apple.com:8443/x','https://fcm.googleapis.com/x#hash','https://example.org/x'])assert.equal(allowedPushEndpoint(url),false,url);

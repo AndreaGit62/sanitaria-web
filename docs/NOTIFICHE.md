@@ -1,8 +1,16 @@
 # Avvisi VisiLab
 
+## Dispositivi personali e PC condiviso
+
+Gli avvisi si attivano soltanto dall'app aggiunta alla Home dell'iPhone. Sul PC resta disponibile la gestione delle visite e dei promemoria, con l'indicazione di attivare gli avvisi dal telefono personale. Il logout dal PC riguarda solo il PC e non revoca gli iPhone.
+
+Per aggiornare un'installazione già attiva eseguire `supabase/migrations/202611170006_iphone_notifications.sql`: elimina le vecchie sottoscrizioni dei servizi push per PC/Android e conserva quelle Apple già presenti, senza modificare appuntamenti, documenti o scheduler. L'interfaccia disiscrive anche il vecchio browser quando si apre Promemoria sul PC; il worker ignora comunque gli endpoint non Apple. Non occorre rigenerare le chiavi né riabilitare gli iPhone esistenti.
+
+Il rilevamento iPhone/standalone nell'interfaccia e dell'user-agent sul server applica la scelta di prodotto. Non è un'attestazione hardware: i servizi push Apple sono condivisi con Safari su altri dispositivi. Le vecchie autorizzazioni Apple vengono quindi conservate per evitare di cancellare quelle degli iPhone; il PC Windows condiviso usa un servizio push differente.
+
 ## Configurazione
 
-1. Eseguire `supabase/migrations/202611160005_push_notifications.sql` nel SQL Editor di Supabase. È rieseguibile; conserva visite e documenti. Crea sottoscrizioni private, registro degli invii e funzioni di invio riservate al server.
+1. Eseguire `supabase/migrations/202611160005_push_notifications.sql` e poi `supabase/migrations/202611170006_iphone_notifications.sql` nel SQL Editor di Supabase. Sono rieseguibili; conservano visite e documenti. Creano sottoscrizioni private riservate agli avvisi iPhone, registro degli invii e funzioni di invio riservate al server.
 2. Eseguire localmente `node scripts/generate-push-setup.mjs`. Genera una sola coppia VAPID e il token dello scheduler; non stamparli o inviarli in chat. Non rigenerare le chiavi dopo aver abilitato i dispositivi.
 3. In Vercel → progetto → Settings → Environment Variables, aggiungere in Production i tre valori di `.env.push.generated.local`: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_CRON_SECRET`. I due valori privati vanno inseriti come Secret.
 4. Aggiungere `SUPABASE_SECRET_KEY` come Secret in Production. Il valore è una Secret API key del progetto Supabase (oppure la chiave legacy service_role). Va inserita direttamente in Vercel, senza condividerla in chat o in Git. Questa chiave è usata esclusivamente dal worker sul server; le azioni dell'utente continuano a usare la sessione e RLS.

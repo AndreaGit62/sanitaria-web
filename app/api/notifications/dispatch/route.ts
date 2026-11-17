@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { pushAdmin, pushConfiguration, sendPush } from '../../../../lib/push-server';
 import { notificationPayload } from '../../../../lib/push-validation';
+import { isApplePushEndpoint } from '../../../../lib/push-device-policy';
 
 export const runtime='nodejs';
 export const maxDuration=60;
@@ -23,6 +24,10 @@ export async function POST(request:Request) {
         const {data:prepared,error:prepareError}=await db.rpc('prepare_visilab_reminder',{p_id:job.id});
         if(prepareError){failed++;return;}
         if(!prepared){cancelled++;return;}
+        if(!isApplePushEndpoint(prepared.endpoint)){
+          await db.from('push_subscriptions').delete().eq('id',prepared.subscriptionId);
+          cancelled++;return;
+        }
         if(prepared.vapidPublicKey!==process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY){
           await db.from('push_deliveries').update({state:'failed',finished_at:new Date().toISOString()}).eq('id',job.id);failed++;return;
         }

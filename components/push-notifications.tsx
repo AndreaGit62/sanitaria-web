@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, BellOff, Send, Smartphone } from 'lucide-react';
 import { disablePush, enablePush, pushStatus, testPush } from '../app/notifications/actions';
+import { isIphone, isIphoneApp } from '../lib/push-device-policy';
 
 type Status=Awaited<ReturnType<typeof pushStatus>>;
 const publicKey=process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -9,6 +10,7 @@ function keyBytes(value:string){return Uint8Array.from(atob(value.replace(/-/g,'
 
 export default function PushNotifications(){
   const [supported,setSupported]=useState<boolean|null>(null),[needsHome,setNeedsHome]=useState(false);
+  const [device,setDevice]=useState<'iphone'|'other'|null>(null);
   const [permission,setPermission]=useState<NotificationPermission>('default');
   const [registration,setRegistration]=useState<ServiceWorkerRegistration|null>(null);
   const [subscription,setSubscription]=useState<PushSubscription|null>(null);
@@ -16,9 +18,30 @@ export default function PushNotifications(){
   useEffect(()=>{
     let live=true;
     async function load(){
-      const appleMobile=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
       const standalone=window.matchMedia('(display-mode: standalone)').matches||Boolean((navigator as Navigator&{standalone?:boolean}).standalone);
-      setNeedsHome(appleMobile&&!standalone);
+      const iphone=isIphone(navigator.userAgent);
+      setDevice(iphone?'iphone':'other');
+      setNeedsHome(iphone&&!standalone);
+      if(!iphone){
+        // Retire the old subscription even when it belonged to another account on this shared browser.
+        // Unsubscribe locally first; the database migration removes stale desktop records globally.
+        try{
+          if('serviceWorker' in navigator){
+            const previous=await navigator.serviceWorker.getRegistration('/');
+            const sub=await previous?.pushManager.getSubscription();
+            if(sub){
+              const removed=await sub.unsubscribe();
+              if(!removed)throw new Error('unsubscribe');
+              const result=await disablePush(sub.endpoint);
+              if('error' in result&&live)setError('Avvisi del browser disattivati. La pulizia sul server verrà completata con l’aggiornamento.');
+            }
+            const notifications=await previous?.getNotifications();
+            notifications?.forEach(notification=>notification.close());
+          }
+        }catch{if(live)setError('Non è stato possibile disattivare i vecchi avvisi del browser. Riapri questa sezione con una connessione attiva.');}
+        return;
+      }
+      if(!standalone)return;
       const capable='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
       setSupported(capable);if(!capable)return;
       setPermission(Notification.permission);
@@ -33,7 +56,8 @@ export default function PushNotifications(){
     void load();return()=>{live=false;};
   },[]);
   async function enable(){
-    if(!registration||!publicKey||busy)return;
+    const standalone=window.matchMedia('(display-mode: standalone)').matches||Boolean((navigator as Navigator&{standalone?:boolean}).standalone);
+    if(!isIphoneApp(navigator.userAgent,standalone)||!registration||!publicKey||busy)return;
     setBusy(true);setError('');setMessage('');
     try{
       // Permission is requested directly from the tap for iOS.
@@ -69,9 +93,10 @@ export default function PushNotifications(){
   }
   const registered=Boolean(status?.active&&subscription);
   const active=registered&&permission==='granted';
+  if(device==='other')return <section className="panel push-settings" aria-labelledby="push-title"><div className="push-heading"><span className="stat-icon green"><Smartphone size={24}/></span><div><h2 id="push-title">Avvisi sul tuo iPhone</h2><p>Attiva i promemoria dal tuo iPhone personale.</p></div></div><p className="push-privacy">Da questo dispositivo puoi gestire le visite e alternare gli account. Gli avvisi vengono inviati solo agli iPhone abilitati; uscire dal PC non disattiva quelli del telefono.</p>{error&&<p className="error" role="alert">{error}</p>}</section>;
   return <section className="panel push-settings" aria-labelledby="push-title">
     <div className="push-heading"><span className="stat-icon green"><Smartphone size={24}/></span><div><h2 id="push-title">Avvisi su questo dispositivo</h2><p>Un promemoria anche quando VisiLab è chiusa.</p></div></div>
-    {supported===null&&<p role="status">Controllo delle notifiche…</p>}
+    {device===null||(!needsHome&&supported===null)?<p role="status">Controllo delle notifiche…</p>:null}
     {needsHome&&<p className="push-note">Su iPhone apri VisiLab dall’icona aggiunta alla schermata Home. Serve iOS 16.4 o successivo.</p>}
     {supported===false&&!needsHome&&<p className="push-note">Questo browser non supporta le notifiche Web Push. Prova un browser aggiornato.</p>}
     {supported&&!needsHome&&<>
