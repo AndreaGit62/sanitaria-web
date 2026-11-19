@@ -20,7 +20,7 @@ export default function AppointmentCard({visit:v,compact=false,attachmentCount=0
     <button type="button" className="visit-open" aria-label={`Apri appuntamento: ${v.title}`} onClick={onOpen}/>
     <div className="date-tile">{pending?<><CalendarClock size={22}/><span>Da fissare</span></>:<><span>{date.toLocaleDateString('it-IT',{month:'short'}).replace('.','')}</span><strong>{date.toLocaleDateString('it-IT',{day:'2-digit'})}</strong></>}</div>
     <div className="visit-content">
-      <div className="visit-heading"><span className="visit-title">{v.title}</span><span className={`tag ${v.specialty==='Laboratorio'?'purple':v.specialty==='Oculistica'?'blue':''}`}>{v.specialty}</span>{pending&&<span className="tag pending-tag">Da prenotare</span>}</div>
+      <div className="visit-heading"><span className="visit-title">{v.title}</span><span className={`tag ${v.specialty==='Analisi'?'purple':v.specialty==='Oculistica'?'blue':''}`}>{v.specialty}</span>{pending&&<span className="tag pending-tag">Da prenotare</span>}</div>
       <p><MapPin size={14}/>{v.hospital||'Struttura da scegliere'}</p>
       <div className="visit-meta"><span><Clock3 size={13}/>{pending?(v.date?`Data indicativa: ${date.toLocaleDateString('it-IT')}`:'In attesa di prenotazione'):v.time||'Orario da definire'}</span>{!compact&&<span>{v.doctor}</span>}</div>
     </div>

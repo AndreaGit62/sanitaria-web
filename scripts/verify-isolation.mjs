@@ -34,7 +34,7 @@ try {
   }
   const anonRead = await anonymous.from('profiles').select('*');
   assert.ok(anonRead.error || anonRead.data.length === 0,'Lettura anonima non bloccata');
-  const sample = {title:'Test tecnico isolamento',specialty:'Altra visita',hospital:'Struttura fittizia',date:'2030-05-20',time:'10:00',doctor:'',notes:'Record temporaneo creato e rimosso dal test',reminder:null,done:false};
+  const sample = {title:'Test tecnico isolamento',specialty:'Altra visita / prestazione',hospital:'Struttura fittizia',date:'2030-05-20',time:'10:00',doctor:'',notes:'Record temporaneo creato e rimosso dal test',reminder:null,done:false};
   const inserted = [];
   for (const [db,userId] of [[a,idA],[b,idB]]) {
     const row = await db.from('appointments').insert({...sample,user_id:userId}).select().single();

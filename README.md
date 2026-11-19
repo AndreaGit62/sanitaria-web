@@ -1,5 +1,9 @@
 # VisiLab · Agenda sanitaria
 
+## Specialità delle visite
+
+Il catalogo condiviso in `lib/appointments.ts` contiene le 25 voci approvate e alimenta modulo, validazione e report. Eseguire `supabase/migrations/202611190007_specialties.sql` per aggiornare il vincolo del database e convertire “Laboratorio” in “Analisi” e “Altra visita” in “Altra visita / prestazione”. La migrazione conserva ID, dettagli e collegamenti ai documenti; aggiorna la versione solo delle visite rinominate per evitare sovrascritture da moduli già aperti.
+
 ## Avvisi automatici
 
 Attivazione per dispositivo, prova Web Push e promemoria con testo discreto. Worker protetto su Vercel, scheduler ogni minuto in Supabase e controllo della visita prima di ogni invio. Il codice richiede la migrazione `202611160005_push_notifications.sql`, le variabili private e l'attivazione del job: **[configurazione e prove](docs/NOTIFICHE.md)**. La consegna reale su iPhone va verificata dopo l'attivazione; il codice da solo non abilita gli invii.

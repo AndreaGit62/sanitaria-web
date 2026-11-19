@@ -1,7 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVisit, validId, fromRow } from '../lib/appointments.ts';
+import { parseVisit, validId, fromRow, specialties, DEFAULT_SPECIALTY } from '../lib/appointments.ts';
 const good = {title:'Visita di prova',specialty:'Altra visita',hospital:'Struttura demo',date:'2028-02-29',time:'10:30',doctor:'',notes:'',reminder:'2028-02-28T18:00',done:false};
+
+test('il catalogo contiene le 25 specialità approvate, incluse le denominazioni lunghe',()=>{
+  assert.equal(specialties.length,25);assert.equal(new Set(specialties).size,25);
+  for(const specialty of specialties)assert.equal(parseVisit({...good,specialty}).specialty,specialty);
+  assert.ok(specialties.includes('Radiologia e diagnostica per immagini'));
+  for(const specialty of ['Pediatria','Medicina dello sport','Psichiatria','Psicologia','Geriatria'])assert.throws(()=>parseVisit({...good,specialty}));
+});
+test('i nomi precedenti restano leggibili e si salvano con le nuove denominazioni',()=>{
+  assert.equal(parseVisit({...good,specialty:'Laboratorio'}).specialty,'Analisi');
+  assert.equal(parseVisit(good).specialty,DEFAULT_SPECIALTY);
+  assert.equal(fromRow({...good,specialty:'Laboratorio'}).specialty,'Analisi');
+  assert.equal(fromRow(good).specialty,DEFAULT_SPECIALTY);
+});
 
 test('le proprietà del proprietario inviate dal browser non entrano nei dati salvati', () => {
   const parsed = parseVisit({...good,user_id:'altro-utente',id:'id-forzato',version:20,title:' Visita di prova '});

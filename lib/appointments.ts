@@ -4,7 +4,18 @@ export function reminderEpoch(value:string):number {
   try{return Temporal.PlainDateTime.from(value).toZonedDateTime('Europe/Rome',{disambiguation:'reject'}).epochMilliseconds;}
   catch{throw new Error('Questo orario del promemoria non esiste o è ambiguo per il cambio dell’ora. Scegli un altro orario.');}
 }
-export const specialties = ['Cardiologia', 'Laboratorio', 'Oculistica', 'Dermatologia', 'Altra visita'] as const;
+export const DEFAULT_SPECIALTY='Altra visita / prestazione';
+export const specialties = [
+  'Allergologia', 'Analisi', 'Angiologia', 'Cardiologia', 'Chirurgia generale',
+  'Dermatologia', 'Diabetologia', 'Dietologia e nutrizione', 'Endocrinologia',
+  'Fisiatria', 'Gastroenterologia', 'Ginecologia e ostetricia', 'Medicina interna',
+  'Nefrologia', 'Neurologia', 'Oculistica', 'Odontoiatria', 'Oncologia', 'Ortopedia',
+  'Otorinolaringoiatria', 'Pneumologia', 'Radiologia e diagnostica per immagini',
+  'Reumatologia', 'Urologia', DEFAULT_SPECIALTY,
+] as const;
+export function normalizeSpecialty(value:string):string {
+  return value==='Laboratorio'?'Analisi':value==='Altra visita'?DEFAULT_SPECIALTY:value;
+}
 export type Visit = {
   id: string; title: string; specialty: string; hospital: string; date: string;
   time: string; doctor: string; notes: string; reminder: string; done: boolean; version?: number;
@@ -39,14 +50,14 @@ export function parseVisit(value: unknown): VisitInput {
   if(reminder&&bookingStatus==='pending')throw new Error('Imposta il promemoria dopo aver confermato data e struttura.');
   if(reminder)reminderEpoch(reminder);
   if (reminder && reminder >= `${date}T${time||'00:00'}`) throw new Error(time?'Il promemoria deve precedere l’appuntamento.':'Senza un orario, il promemoria deve precedere il giorno della visita.');
-  const specialty = field('specialty', 30, true);
+  const specialty = normalizeSpecialty(field('specialty', 80, true));
   if (!(specialties as readonly string[]).includes(specialty) || typeof v.done !== 'boolean') throw new Error('Specialità o stato della visita non validi.');
   return { title: field('title',120,true), hospital, doctor:field('doctor',150), notes:field('notes',2000), date, time, reminder, specialty, done:bookingStatus==='pending'?false:v.done, bookingStatus };
 }
 
 export function fromRow(row: Record<string, unknown>): Visit {
   return {
-    id: String(row.id), title:String(row.title), specialty:String(row.specialty), hospital:String(row.hospital),
+    id: String(row.id), title:String(row.title), specialty:normalizeSpecialty(String(row.specialty)), hospital:String(row.hospital),
     date:row.date ? String(row.date) : '', time:row.time ? String(row.time).slice(0,5) : '', doctor:String(row.doctor), notes:String(row.notes),
     reminder:row.reminder ? String(row.reminder).slice(0,16) : '', done:row.done === true, version:Number(row.version),
     bookingStatus:row.booking_status==='pending'?'pending':'confirmed',

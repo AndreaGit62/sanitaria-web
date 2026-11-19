@@ -17,7 +17,7 @@ try{
   assert.equal(authA.error,null,'Accesso A non riuscito');assert.equal(authB.error,null,'Accesso B non riuscito');
   const idA=authA.data.user.id,idB=authB.data.user.id;assert.notEqual(idA,idB);
   for(const [db,userId] of [[a,idA],[b,idB]]){
-    const visit=await db.from('appointments').insert({user_id:userId,title:'Prova documenti temporanea',hospital:'Struttura fittizia',specialty:'Altra visita',date:'2030-06-01',time:'10:00'}).select().single();
+    const visit=await db.from('appointments').insert({user_id:userId,title:'Prova documenti temporanea',hospital:'Struttura fittizia',specialty:'Altra visita / prestazione',date:'2030-06-01',time:'10:00'}).select().single();
     assert.equal(visit.error,null,'Creazione visita di prova non riuscita');visits.push([db,visit.data.id]);
     const id=randomUUID(),path=`${userId}/${id}.pdf`;
     const metadata={id,user_id:userId,storage_path:path,original_name:'Test isolamento.pdf',mime_type:'application/pdf',size:pdf.size,status:'pending',appointment_id:visit.data.id};

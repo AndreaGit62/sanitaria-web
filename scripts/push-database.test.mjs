@@ -4,10 +4,12 @@ import {readFile} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
 import {generateVAPIDKeys} from 'web-push';
 import {randomBytes} from 'node:crypto';
+import {specialties} from '../lib/appointments.ts';
 
 const first='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',second='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const key=generateVAPIDKeys().publicKey,auth=randomBytes(16).toString('base64url');
 let db;
+let specialtyBefore,specialtyAfter;
 const rows=async(sql,params=[]) => (await db.query(sql,params)).rows;
 const asUser=async uid=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[uid]);await db.exec('set role authenticated');};
 const asAdmin=()=>db.exec('reset role');
@@ -20,7 +22,7 @@ async function device(uid=first,suffix='one'){
 async function visit(uid=first,overrides=''){
   await asAdmin();
   const [r]=await rows(`insert into public.appointments(user_id,title,specialty,hospital,date,time,doctor,notes,reminder)
-    values($1,'Test riservato','Altra visita','Struttura privata',(now() at time zone 'Europe/Rome')::date+1,'12:00','','',date_trunc('minute',(now()-interval '1 minute') at time zone 'Europe/Rome')) returning id`,[uid]);
+    values($1,'Test riservato','Altra visita / prestazione','Struttura privata',(now() at time zone 'Europe/Rome')::date+1,'12:00','','',date_trunc('minute',(now()-interval '1 minute') at time zone 'Europe/Rome')) returning id`,[uid]);
   if(overrides)await db.exec(`update public.appointments set ${overrides} where id='${r.id}'`);
   return r.id;
 }
@@ -37,9 +39,29 @@ before(async()=>{
   // The notifications migration must also be safe when pasted a second time.
   await db.exec(await readFile(new URL('../supabase/migrations/202611160005_push_notifications.sql',import.meta.url),'utf8'));
   await db.exec(await readFile(new URL('../supabase/migrations/202611170006_iphone_notifications.sql',import.meta.url),'utf8'));
+  await db.query('insert into auth.users(id) values($1)',[first]);
+  for(const specialty of ['Laboratorio','Altra visita','Cardiologia'])await db.query("insert into public.appointments(user_id,title,specialty,hospital,date,time,notes,version) values($1,'Visita conservata',$2,'Struttura di prova','2030-05-20','10:00','Nota conservata',3)",[first,specialty]);
+  specialtyBefore=await rows('select * from public.appointments order by id');
+  const specialtyMigration=await readFile(new URL('../supabase/migrations/202611190007_specialties.sql',import.meta.url),'utf8');
+  await db.exec(specialtyMigration);await db.exec(specialtyMigration);
+  specialtyAfter=await rows('select * from public.appointments order by id');
 });
 beforeEach(async()=>{await asAdmin();await db.exec('truncate auth.users cascade;update public.push_scheduler_status set last_run_at=null');await db.query('insert into auth.users(id) values($1),($2)',[first,second]);});
 after(async()=>{await db?.close();});
+
+test('migrazione specialità rieseguibile: cambia le etichette e conserva tutti i dettagli della visita',()=>{
+  assert.equal(specialtyAfter.length,specialtyBefore.length);
+  for(let i=0;i<specialtyBefore.length;i++){
+    const old=specialtyBefore[i],updated=specialtyAfter[i],changed=old.specialty!=='Cardiologia';
+    assert.equal(updated.specialty,old.specialty==='Laboratorio'?'Analisi':old.specialty==='Altra visita'?'Altra visita / prestazione':old.specialty);
+    assert.equal(updated.version,old.version+(changed?1:0));
+    assert.deepEqual({...updated,specialty:old.specialty,version:old.version},old);
+  }
+});
+test('il database accetta tutte le nuove specialità e rifiuta quelle escluse',async()=>{
+  for(const specialty of specialties)await db.query("insert into public.appointments(user_id,title,specialty,hospital,date,time) values($1,'Verifica catalogo',$2,'Struttura di prova','2030-05-20','10:00')",[first,specialty]);
+  for(const specialty of ['Laboratorio','Altra visita','Pediatria','Medicina dello sport','Psichiatria','Psicologia','Geriatria'])await assert.rejects(()=>db.query("insert into public.appointments(user_id,title,specialty,hospital,date,time) values($1,'Verifica catalogo',$2,'Struttura di prova','2030-05-20','10:00')",[first,specialty]),/appointments_specialty_check/);
+});
 
 test('aggiornamento iPhone conserva telefoni e visite, elimina i vecchi PC e ne impedisce la registrazione',async()=>{
   const iphone=await device(),appointment=await visit();await asAdmin();
