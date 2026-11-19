@@ -1,5 +1,11 @@
 # VisiLab · Agenda sanitaria
 
+## Report completo in PDF e testo mobile
+
+La sezione Report mostra tutte le visite dell'account in ordine cronologico, senza filtri; quelle senza data sono in fondo. Prenotazione ed esito sono distinti. L'unica esportazione del report è il PDF, generato dal server con sessione verificata e risposta non memorizzabile in cache. Le visite vengono lette a pagine tramite ID, oltre il limite di 500 dell'agenda. Il PDF include nome, data di generazione, intestazioni ripetute e numeri di pagina, con caratteri Noto Sans incorporati (licenza in `public/fonts`).
+
+Gli stili in `app/mobile.css` aumentano i caratteri su cellulare negli elenchi, nei moduli, nei riepiloghi e nei documenti. Prove del report: `node --test scripts/report.test.mjs`; generazione dei PDF con dati esclusivamente inventati: `node --import tsx scripts/verify-report-pdf.mjs` (risultati temporanei in `tmp/pdfs`, esclusi da Git).
+
 ## Specialità delle visite
 
 Il catalogo condiviso in `lib/appointments.ts` contiene le 25 voci approvate e alimenta modulo, validazione e report. Eseguire `supabase/migrations/202611190007_specialties.sql` per aggiornare il vincolo del database e convertire “Laboratorio” in “Analisi” e “Altra visita” in “Altra visita / prestazione”. La migrazione conserva ID, dettagli e collegamenti ai documenti; aggiorna la versione solo delle visite rinominate per evitare sovrascritture da moduli già aperti.

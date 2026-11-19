@@ -5,6 +5,7 @@ node_modules/
 *.tsbuildinfo
 .vercel/
 /supabase/local/
+/tmp/pdfs/
 
 # Repository di prova annidati, estranei al codice dell'app
 /sanitaria-web/

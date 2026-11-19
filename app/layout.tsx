@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './auth.css';
 import './documents.css';
+import './report.css';
+import './mobile.css';
 
 export const metadata: Metadata = {
   title: 'VisiLab · La tua agenda della salute',
