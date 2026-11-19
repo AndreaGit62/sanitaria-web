@@ -6,6 +6,8 @@ La sezione Report mostra tutte le visite dell'account in ordine cronologico, sen
 
 Gli stili in `app/mobile.css` aumentano i caratteri su cellulare negli elenchi, nei moduli, nei riepiloghi e nei documenti. Prove del report: `node --test scripts/report.test.mjs`; generazione dei PDF con dati esclusivamente inventati: `node --import tsx scripts/verify-report-pdf.mjs` (risultati temporanei in `tmp/pdfs`, esclusi da Git).
 
+L'esportazione prepara il PDF in una finestra interna sempre chiudibile. Su iPhone, un secondo tocco su “Salva o condividi PDF” richiama il menu nativo con il file già pronto, conservando il gesto utente necessario a Web Share; non si naviga verso l'anteprima PDF. “Torna al report” interrompe anche la preparazione e libera il file dalla memoria. Sul PC resta disponibile “Scarica PDF”. Controlli del salvataggio: `node --test scripts/report-export.test.mjs`.
+
 ## Specialità delle visite
 
 Il catalogo condiviso in `lib/appointments.ts` contiene le 25 voci approvate e alimenta modulo, validazione e report. Eseguire `supabase/migrations/202611190007_specialties.sql` per aggiornare il vincolo del database e convertire “Laboratorio” in “Analisi” e “Altra visita” in “Altra visita / prestazione”. La migrazione conserva ID, dettagli e collegamenti ai documenti; aggiorna la versione solo delle visite rinominate per evitare sovrascritture da moduli già aperti.
