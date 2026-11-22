@@ -22,10 +22,16 @@ Nessun cron Vercel è necessario. Il limite giornaliero del piano Hobby non è s
 
 ## Comportamento e limiti
 
+### Promemoria per prenotare
+
+La migrazione `202611220008_pending_reminders.sql` abilita gli avvisi anche per le visite da prenotare. Giorno e ora del promemoria sono indipendenti dalla data indicativa della visita: si può ricordare una telefonata senza avere ancora data o struttura. Il promemoria si trova nel modulo, nel riepilogo e nella sezione Promemoria. La notifica mostra un testo generico per ricordare la prenotazione e apre la stessa visita protetta da login.
+
+Per le visite confermate il promemoria deve ancora precedere la visita. Il passaggio da “Da prenotare” a “Confermata” non ripete una notifica già inviata alla stessa ora; modificando la scadenza si programma un nuovo avviso. La migrazione conserva tutte le visite e non richiede modifiche a chiavi, iPhone o job dello scheduler.
+
 - Gli orari sono interpretati in Europe/Rome, anche se il telefono usa un altro fuso. Ore inesistenti o ambigue durante il cambio dell'ora vengono rifiutate.
 - Si può scegliere solo un promemoria futuro nuovo. Un promemoria passato già salvato può restare quando si modificano altri dettagli, ma non viene reinviato per quella modifica.
 - Uno stesso account può abilitare fino a 10 dispositivi. Abilitazione e disattivazione riguardano il dispositivo corrente. La prova è limitata a una al minuto.
-- Il worker esamina fino a 20 destinatari per esecuzione, in gruppi di cinque. La selezione non si blocca sui record già inviati. La finestra di recupero è di 15 minuti e non vengono inviati avvisi dopo la visita o a dispositivi abilitati dopo l'ora del promemoria.
+- Il worker esamina fino a 20 destinatari per esecuzione, in gruppi di cinque. La selezione non si blocca sui record già inviati. La finestra di recupero è di 15 minuti; per le visite confermate non vengono inviati avvisi dopo la visita. I promemoria per prenotare restano indipendenti dalle date indicative. Non si invia a dispositivi abilitati dopo l'ora del promemoria.
 - Ogni coppia visita/ora promemoria/dispositivo ha un solo tentativo. Il claim è atomico e viene ricontrollato prima dell'invio. Modificare l'orario crea una nuova scadenza; annullare, completare o eliminare la visita impedisce gli invii ancora da avviare. Un invio già partito non può essere ritirato.
 - Non esiste una garanzia di consegna esattamente una volta. In caso di timeout ambiguo o interruzione del worker non si ritenta automaticamente: si evita un doppio avviso, ma l'avviso potrebbe non arrivare. “sent” significa accettato dal servizio push, non visualizzato dal telefono. Il tag della notifica e il topic del provider limitano ulteriormente i duplicati visibili.
 - Gli endpoint scaduti (404/410) vengono rimossi. Se si cambiano le chiavi VAPID, occorre riabilitare i dispositivi.

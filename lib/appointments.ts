@@ -47,9 +47,8 @@ export function parseVisit(value: unknown): VisitInput {
   const bookingStatus=requestedPending && (!date||!hospital) ? 'pending' : 'confirmed';
   if(bookingStatus==='confirmed'&&(!date||!hospital))throw new Error('Per confermare la visita inserisci data e struttura.');
   if (reminder && (reminder.length !== 16 || reminder[10] !== 'T' || !validDate(reminder.slice(0,10)) || !validTime(reminder.slice(11)))) throw new Error('Data del promemoria non valida.');
-  if(reminder&&bookingStatus==='pending')throw new Error('Imposta il promemoria dopo aver confermato data e struttura.');
   if(reminder)reminderEpoch(reminder);
-  if (reminder && reminder >= `${date}T${time||'00:00'}`) throw new Error(time?'Il promemoria deve precedere l’appuntamento.':'Senza un orario, il promemoria deve precedere il giorno della visita.');
+  if (reminder && bookingStatus==='confirmed' && reminder >= `${date}T${time||'00:00'}`) throw new Error(time?'Il promemoria deve precedere l’appuntamento.':'Senza un orario, il promemoria deve precedere il giorno della visita.');
   const specialty = normalizeSpecialty(field('specialty', 80, true));
   if (!(specialties as readonly string[]).includes(specialty) || typeof v.done !== 'boolean') throw new Error('Specialità o stato della visita non validi.');
   return { title: field('title',120,true), hospital, doctor:field('doctor',150), notes:field('notes',2000), date, time, reminder, specialty, done:bookingStatus==='pending'?false:v.done, bookingStatus };

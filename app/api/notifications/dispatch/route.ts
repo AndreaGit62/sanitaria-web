@@ -32,7 +32,7 @@ export async function POST(request:Request) {
           await db.from('push_deliveries').update({state:'failed',finished_at:new Date().toISOString()}).eq('id',job.id);failed++;return;
         }
         let result:{ok:boolean;status:number;expired:boolean};
-        try{result=await sendPush(prepared,notificationPayload(prepared.appointmentId,prepared.reminderAt));}
+        try{result=await sendPush(prepared,notificationPayload(prepared.appointmentId,prepared.reminderAt,prepared.bookingStatus==='pending'));}
         catch{result={ok:false,status:0,expired:false};}
         const {error:saveError}=await db.from('push_deliveries').update({state:result.ok?'sent':'failed',provider_status:result.status||null,finished_at:new Date().toISOString()}).eq('id',job.id).eq('state','sending');
         if(result.expired)await db.from('push_subscriptions').delete().eq('id',prepared.subscriptionId);

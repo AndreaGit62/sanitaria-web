@@ -1,5 +1,9 @@
 # VisiLab · Agenda sanitaria
 
+## Promemoria per prenotare
+
+È possibile impostare giorno e ora di un avviso anche senza data o struttura della visita, per ricordarsi di prenotarla. Richiede `supabase/migrations/202611220008_pending_reminders.sql`, che conserva i dati e aggiorna i controlli e lo scheduler già esistente. Le visite confermate mantengono il vincolo del promemoria precedente alla visita.
+
 ## Report completo in PDF e testo mobile
 
 La sezione Report mostra tutte le visite dell'account in ordine cronologico, senza filtri; quelle senza data sono in fondo. Prenotazione ed esito sono distinti. L'unica esportazione del report è il PDF, generato dal server con sessione verificata e risposta non memorizzabile in cache. Le visite vengono lette a pagine tramite ID, oltre il limite di 500 dell'agenda. Il PDF include nome, data di generazione, intestazioni ripetute e numeri di pagina, con caratteri Noto Sans incorporati (licenza in `public/fonts`).

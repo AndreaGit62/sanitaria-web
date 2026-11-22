@@ -10,7 +10,7 @@ self.addEventListener('push',event=>{
   let data={};try{data=event.data?.json()||{};}catch{/* Always show an incoming push. */}
   const url=safeNotificationPath(data.url),isReminder=url!=='/';
   event.waitUntil(self.registration.showNotification('VisiLab',{
-    body:isReminder?'Hai un appuntamento in programma. Tocca per vedere i dettagli.':'Le notifiche di VisiLab funzionano su questo dispositivo.',
+    body:isReminder?(data.purpose==='booking'?'Hai una visita da prenotare. Tocca per vedere il promemoria.':'Hai un appuntamento in programma. Tocca per vedere i dettagli.'):'Le notifiche di VisiLab funzionano su questo dispositivo.',
     icon:'/icons/visilab-192.png',
     tag:typeof data.tag==='string'&&data.tag.startsWith('visilab-')?data.tag.slice(0,160):'visilab-avviso',
     data:{url},renotify:false,

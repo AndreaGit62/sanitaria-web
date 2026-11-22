@@ -35,6 +35,11 @@ test('orari italiani indipendenti dal fuso del dispositivo; rifiuta ore inesiste
   assert.equal(reminderEpoch('2027-07-15T10:00'),Date.parse('2027-07-15T08:00:00Z'));
   for(const time of ['2027-03-28T02:30','2027-10-31T02:30'])assert.throws(()=>reminderEpoch(time));
 });
+test('gli avvisi per prenotare mantengono il collegamento alla visita e un testo discreto',()=>{
+  const id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const pending=notificationPayload(id,'2027-01-01T10:00:00Z',true),confirmed=notificationPayload(id,'2027-01-01T10:00:00Z');
+  assert.equal(pending.purpose,'booking');assert.ok(pending.body.includes('da prenotare'));assert.equal(pending.url,confirmed.url);assert.equal(pending.tag,confirmed.tag);
+});
 test('service worker mostra testo discreto e apre solo l’origine di VisiLab',async()=>{
   const handlers={},shown=[],opened=[];let navigated='';
   const self={location:{origin:'https://visilab.example'},addEventListener:(name,handler)=>handlers[name]=handler,
@@ -44,6 +49,8 @@ test('service worker mostra testo discreto e apre solo l’origine di VisiLab',a
   let pending;const waitUntil=p=>pending=p;
   handlers.push({data:{json:()=>({url:'https://attacker.example/private',body:'Dati sanitari',title:'Titolo esterno'})},waitUntil});await pending;
   assert.equal(shown[0].title,'VisiLab');assert.ok(!shown[0].body.includes('Dati sanitari'));assert.equal(shown[0].data.url,'/');
+  handlers.push({data:{json:()=>({url:'/?appointment=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',purpose:'booking',body:'Dettagli privati'})},waitUntil});await pending;
+  assert.ok(shown.at(-1).body.includes('da prenotare'));assert.ok(!shown.at(-1).body.includes('Dettagli privati'));
   handlers.notificationclick({notification:{close(){},data:{url:'//attacker.example'}},waitUntil});await pending;
   assert.equal(opened[0],'https://visilab.example/');
   const path='/?appointment=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';

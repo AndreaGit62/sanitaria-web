@@ -45,9 +45,51 @@ before(async()=>{
   const specialtyMigration=await readFile(new URL('../supabase/migrations/202611190007_specialties.sql',import.meta.url),'utf8');
   await db.exec(specialtyMigration);await db.exec(specialtyMigration);
   specialtyAfter=await rows('select * from public.appointments order by id');
+  const pendingReminderMigration=await readFile(new URL('../supabase/migrations/202611220008_pending_reminders.sql',import.meta.url),'utf8');
+  await db.exec(pendingReminderMigration);await db.exec(pendingReminderMigration);
+  assert.deepEqual(await rows('select * from public.appointments order by id'),specialtyAfter);
 });
 beforeEach(async()=>{await asAdmin();await db.exec('truncate auth.users cascade;update public.push_scheduler_status set last_run_at=null');await db.query('insert into auth.users(id) values($1),($2)',[first,second]);});
 after(async()=>{await db?.close();});
+
+async function pendingVisit(uid=first,indicative=false){
+  const id=await visit(uid);await asAdmin();
+  await db.query(`update public.appointments set booking_status='pending',hospital='',date=${indicative?"((now()-interval '2 days') at time zone 'Europe/Rome')::date":'null'},time=${indicative?"time '10:00'":'null'} where id=$1`,[id]);
+  return id;
+}
+test('invia il promemoria per prenotare senza data visita e anche dopo una data puramente indicativa',async()=>{
+  const subscription=await device();
+  for(const indicative of [false,true]){
+    const id=await pendingVisit(first,indicative);const [job]=await claim();assert.ok(job);
+    const payload=await prepare(job.id);assert.equal(payload.bookingStatus,'pending');assert.equal(payload.appointmentId,id);assert.equal(payload.subscriptionId,subscription);
+    assert.equal((await claim()).length,0);
+  }
+});
+test('un promemoria di prenotazione spostato, rimosso o eliminato non viene inviato alla vecchia scadenza',async()=>{
+  await device();
+  for(const change of ['reschedule','clear','delete']){
+    const id=await pendingVisit();const [job]=await claim();await asAdmin();
+    if(change==='reschedule')await db.query("update public.appointments set reminder=reminder+interval '1 hour' where id=$1",[id]);
+    if(change==='clear')await db.query('update public.appointments set reminder=null where id=$1',[id]);
+    if(change==='delete')await db.query('delete from public.appointments where id=$1',[id]);
+    await asWorker();assert.equal(await prepare(job.id),null);
+  }
+});
+test('la conferma della visita non ripete un promemoria già inviato e aggiorna il tipo prima dell’invio',async()=>{
+  await device();
+  const firstVisit=await pendingVisit(),[firstJob]=await claim();assert.equal((await prepare(firstJob.id)).bookingStatus,'pending');
+  await db.query("update public.push_deliveries set state='sent' where id=$1",[firstJob.id]);
+  const confirm=async id=>{await asAdmin();await db.query("update public.appointments set booking_status='confirmed',hospital='Struttura confermata',date=(now() at time zone 'Europe/Rome')::date+1,time='10:00' where id=$1",[id]);};
+  await confirm(firstVisit);assert.equal((await claim()).length,0);
+  const secondVisit=await pendingVisit(),[secondJob]=await claim();await confirm(secondVisit);await asWorker();
+  assert.equal((await prepare(secondJob.id)).bookingStatus,'confirmed');
+});
+test('i controlli sui promemoria delle visite confermate restano attivi',async()=>{
+  const id=await pendingVisit();
+  await assert.rejects(()=>db.query("update public.appointments set done=true where id=$1",[id]),/appointments_booking_fields_check/);
+  await db.query("update public.appointments set booking_status='confirmed',hospital='Struttura',date=(now() at time zone 'Europe/Rome')::date+1,time='10:00' where id=$1",[id]);
+  await assert.rejects(()=>db.query("update public.appointments set reminder=date+time where id=$1",[id]),/appointments_booking_reminder_check/);
+});
 
 test('migrazione specialità rieseguibile: cambia le etichette e conserva tutti i dettagli della visita',()=>{
   assert.equal(specialtyAfter.length,specialtyBefore.length);

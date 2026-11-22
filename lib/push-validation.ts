@@ -24,11 +24,12 @@ export function parsePushDevice(value:unknown):PushDevice {
   return {endpoint:v.endpoint,keys:{p256dh,auth}};
 }
 
-export function notificationPayload(appointmentId?:string,reminderAt?:string) {
+export function notificationPayload(appointmentId?:string,reminderAt?:string,pendingBooking=false) {
   const id=appointmentId&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(appointmentId)?appointmentId:undefined;
   return {
     title:'VisiLab',
-    body:id?'Hai un appuntamento in programma. Tocca per vedere i dettagli.':'Le notifiche di VisiLab funzionano su questo dispositivo.',
+    body:id?(pendingBooking?'Hai una visita da prenotare. Tocca per vedere il promemoria.':'Hai un appuntamento in programma. Tocca per vedere i dettagli.'):'Le notifiche di VisiLab funzionano su questo dispositivo.',
+    purpose:id?(pendingBooking?'booking':'appointment'):'test',
     url:id?`/?appointment=${id}`:'/',
     tag:id?`visilab-${id}-${reminderAt||''}`:'visilab-test',
   };

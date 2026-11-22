@@ -49,9 +49,16 @@ test('visite da prenotare ammettono data e struttura ancora da definire',()=>{
     assert.equal(parsed.bookingStatus,'pending');assert.equal(parsed.done,false);
     assert.equal(parsed.title,good.title);
   }
-  assert.throws(()=>parseVisit({...draft,reminder:good.reminder}));
+  assert.equal(parseVisit({...draft,reminder:good.reminder}).reminder,good.reminder);
   assert.throws(()=>parseVisit({...draft,date:'2027-02-29'}));
   assert.throws(()=>parseVisit({...draft,bookingStatus:'inventato'}));
+});
+
+test('il promemoria per prenotare è indipendente dalla data indicativa, ma la conferma conserva i controlli della visita',()=>{
+  const pending=parseVisit({...good,bookingStatus:'pending',hospital:'',date:'2028-02-20',reminder:'2028-02-28T18:00'});
+  assert.equal(pending.bookingStatus,'pending');assert.equal(pending.reminder,'2028-02-28T18:00');
+  assert.throws(()=>parseVisit({...pending,hospital:'Struttura confermata'}));
+  assert.throws(()=>parseVisit({...pending,reminder:'2027-03-28T02:30'}));
 });
 test('data e struttura promuovono la visita preservando note e dettagli',()=>{
   const parsed=parseVisit({...good,bookingStatus:'pending',time:'',reminder:'',notes:'Portare prescrizione'});
